@@ -1,30 +1,11 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
-import { createUser, findUserByEmail, findUserById } from "../repositories/users.js";
+import { findUserByEmail, findUserById } from "../repositories/users.js";
 import { requireAuth } from "../middleware/auth.js";
-import { loginRules, registerRules } from "../validators/auth.js";
+import { loginRules } from "../validators/auth.js";
 
 export const authRouter = Router();
-
-authRouter.post("/register", registerRules, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ errors: errors.array() });
-    return;
-  }
-
-  const existingUser = findUserByEmail(req.body.email);
-  if (existingUser) {
-    res.status(409).json({ error: "User already exists" });
-    return;
-  }
-
-  const passwordHash = await bcrypt.hash(req.body.password, 12);
-  const user = createUser({ email: req.body.email, passwordHash });
-  req.session.userId = user.id;
-  res.status(201).json({ user });
-});
 
 authRouter.post("/login", loginRules, async (req, res) => {
   const errors = validationResult(req);
@@ -45,8 +26,14 @@ authRouter.post("/login", loginRules, async (req, res) => {
     return;
   }
 
-  req.session.userId = user.id;
-  res.json({ user: findUserById(user.id) });
+  req.session.regenerate((err) => {
+    if (err) {
+      res.status(500).json({ error: "Could not log in" });
+      return;
+    }
+    req.session.userId = user.id;
+    res.json({ user: findUserById(user.id) });
+  });
 });
 
 authRouter.post("/logout", requireAuth, (req, res) => {

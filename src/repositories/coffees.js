@@ -65,3 +65,34 @@ export function updateCoffee(id, coffee) {
 export function deleteCoffee(id) {
   return deleteStatement.run(id).changes > 0;
 }
+
+const distinctParitoluStatement = db.prepare(
+  "SELECT DISTINCT paritolu FROM kohvisort ORDER BY paritolu"
+);
+const distinctRostitaseStatement = db.prepare(
+  "SELECT DISTINCT rostitase FROM kohvisort ORDER BY rostitase"
+);
+
+// Values are bound (?), only the whitelisted sort keyword is interpolated.
+export function listCoffeesFiltered({ paritolu, rostitase, sort } = {}) {
+  const where = [];
+  const args = [];
+  if (paritolu) { where.push("paritolu = ?"); args.push(paritolu); }
+  if (rostitase) { where.push("rostitase = ?"); args.push(rostitase); }
+  const order = sort === "asc" ? "hind ASC" : sort === "desc" ? "hind DESC" : "id ASC";
+  const sql = `
+    SELECT id, nimi, paritolu, rostitase, maitseprofiil, hind, kaal, kirjeldus, pilt
+    FROM kohvisort
+    ${where.length ? "WHERE " + where.join(" AND ") : ""}
+    ORDER BY ${order}
+  `;
+  return db.prepare(sql).all(...args);
+}
+
+export function distinctParitolu() {
+  return distinctParitoluStatement.all().map((row) => row.paritolu);
+}
+
+export function distinctRostitase() {
+  return distinctRostitaseStatement.all().map((row) => row.rostitase);
+}
