@@ -33,9 +33,9 @@ Projektis kasutatakse parameetritega SQL-päringuid, mitte stringide kokkuliitmi
 
 ## Nunjucks
 
-Nunjucks on mallimootor HTML-vaadete jaoks. See sobib Moodul 4 jaoks, sest Moodul 3 HTML/CSS/JS saab hiljem tõlkida back-endi vaadeteks.
+Nunjucks on mallimootor HTML-vaadete jaoks. See sobib Moodul 4 jaoks, sest Moodul 3 HTML/CSS/JS on tõlgendatud back-endi vaadeteks ja korduvad osad saab hoida eraldi mallides.
 
-Praegu vaateid veel ei ehitata. Skeleton valmistab ette Nunjucksi kasutamise, et hiljem oleks lihtne luua:
+Projektis on Nunjucksi vaadetena olemas:
 
 - avaleht
 - kohvisortide leht
