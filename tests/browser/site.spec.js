@@ -55,3 +55,27 @@ test("key pages meet WCAG 2.2 AA checks", async ({ page }) => {
     expect(results.violations, `${route}: ${JSON.stringify(results.violations)}`).toEqual([]);
   }
 });
+
+test("desktop motion loads on demand and scrubs the hero video", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+
+  const video = page.locator(".hero__video");
+  await expect(video).not.toHaveAttribute("src", /coffee-loop/);
+
+  await page.mouse.wheel(0, 120);
+  await expect(video).toHaveAttribute("src", /coffee-loop\.mp4/);
+  await page.waitForFunction(() => {
+    const element = document.querySelector(".hero__video");
+    return element && element.readyState >= 1 && Number.isFinite(element.duration);
+  });
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(100);
+  await page.evaluate(() => window.scrollTo(0, 420));
+  await page.waitForTimeout(500);
+
+  const currentTime = await video.evaluate((element) => element.currentTime);
+  expect(currentTime).toBeGreaterThan(0);
+});
