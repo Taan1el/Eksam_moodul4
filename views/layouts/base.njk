@@ -9,8 +9,7 @@
       content="{{ description or 'Slow Pour — väikepartii kohviröstikoda Tallinnas. Käsitsi röstitud kohv, aeglaselt ja hoolega.' }}"
     />
     {# Fonts are vendored locally in tokens.css (@font-face) — no CDN. #}
-    <link rel="stylesheet" href="/src/styles/tokens.css" />
-    <link rel="stylesheet" href="/src/styles/main.css" />
+    <link rel="stylesheet" href="/build/main.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">Liigu sisu juurde</a>
@@ -22,6 +21,6 @@
 
     {% include "partials/footer.njk" %}
 
-    <script type="module" src="/src/scripts/main.js"></script>
+    <script type="module" src="/build/main.js"></script>
   </body>
 </html>

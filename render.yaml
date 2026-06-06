@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm install && npm run migrate
+    buildCommand: npm install && npm run build && npm run migrate
     startCommand: node app.js
     healthCheckPath: /
     autoDeploy: true

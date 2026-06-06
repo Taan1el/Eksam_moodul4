@@ -30,6 +30,7 @@ app.disable("x-powered-by");
 
 app.use(helmet());
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+app.use("/build", express.static(path.join(__dirname, "public/build")));
 app.use("/src", express.static(path.join(__dirname, "public/src")));
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
 app.use(express.json({ limit: "100kb" }));
