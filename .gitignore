@@ -7,3 +7,6 @@ data/
 *.log
 dist/
 public/build/
+.test-data/
+playwright-report/
+test-results/
