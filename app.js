@@ -22,7 +22,7 @@ import {
 } from "./src/middleware/rateLimits.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const app = express();
+export const app = express();
 const { csrfSynchronisedProtection, generateToken, invalidCsrfTokenError } = csrfSync({
   getTokenFromRequest: (req) => req.body._csrf || req.headers["x-csrf-token"]
 });
@@ -150,6 +150,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(config.port, () => {
-  console.log(`Slow Pour backend listening on port ${config.port}`);
-});
+export function startServer(port = config.port) {
+  return app.listen(port, () => {
+    console.log(`Slow Pour backend listening on port ${port}`);
+  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  startServer();
+}
