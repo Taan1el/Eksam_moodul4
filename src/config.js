@@ -30,8 +30,12 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
   throw new Error("SMTP_PORT must be a valid TCP port");
 }
-if (!Number.isFinite(sessionMaxAgeMs) || sessionMaxAgeMs < 15 * 60 * 1000) {
-  throw new Error("SESSION_MAX_AGE_MS must be at least 15 minutes");
+if (
+  !Number.isFinite(sessionMaxAgeMs) ||
+  sessionMaxAgeMs < 15 * 60 * 1000 ||
+  sessionMaxAgeMs > 7 * 24 * 60 * 60 * 1000
+) {
+  throw new Error("SESSION_MAX_AGE_MS must be between 15 minutes and 7 days");
 }
 if (smtpHost && (!smtpUser || !smtpPass || !smtpTo || !smtpFrom)) {
   throw new Error("SMTP_USER, SMTP_PASS, CONTACT_TO and CONTACT_FROM are required with SMTP_HOST");
