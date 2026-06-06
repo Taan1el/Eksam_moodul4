@@ -16,6 +16,10 @@ services:
       # Render genereerib turvalise sessioonisaladuse
       - key: SESSION_SECRET
         generateValue: true
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SESSION_MAX_AGE_MS
+        value: "28800000"
       # Admin luuakse migratsioonis nendest väärtustest (täida dashboardis)
       - key: ADMIN_EMAIL
         sync: false
