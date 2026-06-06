@@ -1,6 +1,9 @@
 import express from "express";
+import compression from "compression";
 import session from "express-session";
 import helmet from "helmet";
+import crypto from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { csrfSync } from "csrf-sync";
@@ -22,19 +25,28 @@ import {
 } from "./src/middleware/rateLimits.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const builtCssPath = path.join(__dirname, "public/build/main.css");
+const inlineStyles = fs.existsSync(builtCssPath)
+  ? fs.readFileSync(builtCssPath, "utf8")
+  : "";
+const inlineStyleHash = inlineStyles
+  ? `'sha256-${crypto.createHash("sha256").update(inlineStyles).digest("base64")}'`
+  : null;
 export const app = express();
 const { csrfSynchronisedProtection, generateToken, invalidCsrfTokenError } = csrfSync({
   getTokenFromRequest: (req) => req.body._csrf || req.headers["x-csrf-token"]
 });
 
-nunjucks.configure(path.join(__dirname, "views"), {
+const views = nunjucks.configure(path.join(__dirname, "views"), {
   autoescape: true,
   express: app
 });
+views.addGlobal("inlineStyles", inlineStyles);
 
 app.set("view engine", "njk");
 app.set("trust proxy", config.trustProxy);
 app.disable("x-powered-by");
+app.use(compression());
 
 app.use(
   helmet({
@@ -51,15 +63,16 @@ app.use(
         objectSrc: ["'none'"],
         scriptSrc: ["'self'"],
         scriptSrcAttr: ["'none'"],
-        styleSrc: ["'self'"],
+        styleSrc: ["'self'", ...(inlineStyleHash ? [inlineStyleHash] : [])],
         upgradeInsecureRequests: config.nodeEnv === "production" ? [] : null
       }
     },
     referrerPolicy: { policy: "strict-origin-when-cross-origin" }
   })
 );
-app.use("/assets", express.static(path.join(__dirname, "public/assets")));
-app.use("/build", express.static(path.join(__dirname, "public/build")));
+const staticCache = config.nodeEnv === "production" ? { maxAge: "1d" } : {};
+app.use("/assets", express.static(path.join(__dirname, "public/assets"), staticCache));
+app.use("/build", express.static(path.join(__dirname, "public/build"), staticCache));
 app.use("/src", express.static(path.join(__dirname, "public/src")));
 app.use(generalLimiter);
 app.use(express.urlencoded({ extended: false, limit: "100kb", parameterLimit: 100 }));
