@@ -11,6 +11,7 @@
     "add-admin": "node scripts/add-admin.mjs",
     "show-admins": "node scripts/show-admins.mjs",
     "db": "node scripts/db-show.mjs",
+    "sql": "node scripts/sql.mjs",
     "test": "npm run test:integration",
     "test:integration": "node --test --test-concurrency=1 tests/integration/app.test.js",
     "test:browser": "playwright test",
