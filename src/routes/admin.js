@@ -3,11 +3,34 @@ import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import { requireAuth } from "../middleware/auth.js";
 import { createCoffee, deleteCoffee, findCoffeeById, listCoffees, updateCoffee } from "../repositories/coffees.js";
+import { createEvent, deleteEvent, findEventById, listEvents, updateEvent } from "../repositories/events.js";
+import { listOrders } from "../repositories/orders.js";
 import { findUserByEmail } from "../repositories/users.js";
 import { coffeeIdRule, coffeeRules } from "../validators/coffee.js";
+import { eventIdRule, eventRules } from "../validators/event.js";
 import { loginRules } from "../validators/auth.js";
 
 export const adminRouter = Router();
+
+// Whitelisted flash messages — only known codes are shown (never raw query text).
+const NOTICES = {
+  "kohvisort-lisatud": "Kohvisort lisatud.",
+  "kohvisort-muudetud": "Kohvisort uuendatud.",
+  "kohvisort-kustutatud": "Kohvisort kustutatud.",
+  "syndmus-lisatud": "Sündmus lisatud.",
+  "syndmus-muudetud": "Sündmus uuendatud.",
+  "syndmus-kustutatud": "Sündmus kustutatud."
+};
+
+function eventFormData(body = {}) {
+  return {
+    date_label: body.date_label || "",
+    title: body.title || "",
+    location: body.location || "",
+    spots_free: body.spots_free ?? "",
+    spots_total: body.spots_total ?? ""
+  };
+}
 
 function coffeeFormData(body = {}) {
   return {
@@ -71,7 +94,10 @@ adminRouter.post("/logout", requireAuth, (req, res) => {
 adminRouter.get("/", requireAuth, (req, res) => {
   res.render("admin/index", {
     title: "Admin",
-    coffees: listCoffees()
+    coffees: listCoffees(),
+    orders: listOrders(),
+    events: listEvents(),
+    notice: NOTICES[req.query.teade] || null
   });
 });
 
@@ -95,8 +121,8 @@ adminRouter.post("/kohvisordid", requireAuth, coffeeRules, (req, res) => {
     return;
   }
 
-  const coffee = createCoffee(req.body);
-  res.redirect(`/admin/kohvisordid/${coffee.id}/edit`);
+  createCoffee(req.body);
+  res.redirect("/admin?teade=kohvisort-lisatud");
 });
 
 adminRouter.get("/kohvisordid/:id/edit", requireAuth, coffeeIdRule, (req, res) => {
@@ -131,11 +157,74 @@ adminRouter.post("/kohvisordid/:id", requireAuth, coffeeIdRule, coffeeRules, (re
     res.status(404).render("pages/simple", { title: "Ei leitud", heading: "Kohvisorti ei leitud" });
     return;
   }
-  res.redirect("/admin");
+  res.redirect("/admin?teade=kohvisort-muudetud");
 });
 
 adminRouter.post("/kohvisordid/:id/delete", requireAuth, coffeeIdRule, (req, res) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) deleteCoffee(req.params.id);
-  res.redirect("/admin");
+  res.redirect("/admin?teade=kohvisort-kustutatud");
+});
+
+/* ---- Sündmused (events) CRUD --------------------------------------------- */
+adminRouter.get("/sundmused/new", requireAuth, (req, res) => {
+  res.render("admin/event-form", {
+    title: "Lisa sündmus",
+    action: "/admin/sundmused",
+    event: eventFormData()
+  });
+});
+
+adminRouter.post("/sundmused", requireAuth, eventRules, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).render("admin/event-form", {
+      title: "Lisa sündmus",
+      action: "/admin/sundmused",
+      event: eventFormData(req.body),
+      errors: errors.array()
+    });
+    return;
+  }
+  createEvent(req.body);
+  res.redirect("/admin?teade=syndmus-lisatud");
+});
+
+adminRouter.get("/sundmused/:id/edit", requireAuth, eventIdRule, (req, res) => {
+  const errors = validationResult(req);
+  const event = errors.isEmpty() ? findEventById(req.params.id) : null;
+  if (!event) {
+    res.status(404).render("pages/simple", { title: "Ei leitud", heading: "Sündmust ei leitud" });
+    return;
+  }
+  res.render("admin/event-form", {
+    title: "Muuda sündmust",
+    action: `/admin/sundmused/${event.id}`,
+    event
+  });
+});
+
+adminRouter.post("/sundmused/:id", requireAuth, eventIdRule, eventRules, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).render("admin/event-form", {
+      title: "Muuda sündmust",
+      action: `/admin/sundmused/${req.params.id}`,
+      event: { id: req.params.id, ...eventFormData(req.body) },
+      errors: errors.array()
+    });
+    return;
+  }
+  const event = updateEvent(req.params.id, req.body);
+  if (!event) {
+    res.status(404).render("pages/simple", { title: "Ei leitud", heading: "Sündmust ei leitud" });
+    return;
+  }
+  res.redirect("/admin?teade=syndmus-muudetud");
+});
+
+adminRouter.post("/sundmused/:id/delete", requireAuth, eventIdRule, (req, res) => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) deleteEvent(req.params.id);
+  res.redirect("/admin?teade=syndmus-kustutatud");
 });

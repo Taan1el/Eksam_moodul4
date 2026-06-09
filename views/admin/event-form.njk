@@ -1,0 +1,29 @@
+{% extends "layouts/base.njk" %}
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <span class="eyebrow eyebrow--on-dark">Admin</span>
+    <h1 class="page-head__title">{{ title }}</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap narrow">
+    {% include "partials/errors.njk" %}
+    <form class="form-card" method="post" action="{{ action }}">
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
+      <label class="field"><span>Kuupäev (silt)</span><input name="date_label" type="text" value="{{ event.date_label }}" placeholder="nt 14. juuni" required /></label>
+      <label class="field"><span>Pealkiri</span><input name="title" type="text" value="{{ event.title }}" required /></label>
+      <label class="field"><span>Asukoht</span><input name="location" type="text" value="{{ event.location }}" required /></label>
+      <div class="order__row">
+        <label class="field"><span>Vabu kohti</span><input name="spots_free" type="number" min="0" value="{{ event.spots_free }}" required /></label>
+        <label class="field"><span>Kohti kokku</span><input name="spots_total" type="number" min="0" value="{{ event.spots_total }}" required /></label>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit">Salvesta</button>
+        <a class="btn btn--outline" href="/admin">Tagasi</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

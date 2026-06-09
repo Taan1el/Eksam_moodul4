@@ -3,44 +3,120 @@
 <section class="page-head">
   <div class="wrap">
     <span class="eyebrow eyebrow--on-dark">Admin</span>
-    <h1 class="page-head__title">Kohvisordid</h1>
-    <p class="page-head__sub">Lisa, muuda ja kustuta andmebaasis olevaid kohvisorte.</p>
+    <h1 class="page-head__title">Töölaud</h1>
+    <p class="page-head__sub">Halda kohvisorte ja sündmusi ning vaata laekunud tellimusi.</p>
   </div>
 </section>
 
 <section class="section">
   <div class="wrap">
+    {% if notice %}
+    <div class="form__success" role="status"><strong>{{ notice }}</strong></div>
+    {% endif %}
+
     <div class="admin-actions">
-      <a class="btn btn--primary" href="/admin/kohvisordid/new">Lisa kohvisort</a>
       <form method="post" action="/admin/logout">
         <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
         <button class="btn btn--outline" type="submit">Logi välja</button>
       </form>
     </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>Nimi</th><th>Päritolu</th><th>Röst</th><th>Hind</th><th></th></tr>
-        </thead>
-        <tbody>
-          {% for coffee in coffees %}
-          <tr>
-            <td>{{ coffee.nimi }}</td>
-            <td>{{ coffee.paritolu }}</td>
-            <td>{{ coffee.rostitase }}</td>
-            <td class="num">{{ coffee.hind }} €</td>
-            <td class="admin-table__actions">
-              <a class="btn btn--outline btn--sm" href="/admin/kohvisordid/{{ coffee.id }}/edit">Muuda</a>
-              <form method="post" action="/admin/kohvisordid/{{ coffee.id }}/delete">
-                <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
-                <button class="btn btn--outline btn--sm" type="submit">Kustuta</button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+    {# ---- Kohvisordid ---- #}
+    <div class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Kohvisordid <span class="admin-count">({{ coffees | length }})</span></h2>
+        <a class="btn btn--primary btn--sm" href="/admin/kohvisordid/new">Lisa kohvisort</a>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Nimi</th><th>Päritolu</th><th>Röst</th><th>Hind</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for coffee in coffees %}
+            <tr>
+              <td>{{ coffee.nimi }}</td>
+              <td>{{ coffee.paritolu }}</td>
+              <td>{{ coffee.rostitase }}</td>
+              <td class="num">{{ coffee.hind }} €</td>
+              <td class="admin-table__actions">
+                <a class="btn btn--outline btn--sm" href="/admin/kohvisordid/{{ coffee.id }}/edit">Muuda</a>
+                <form method="post" action="/admin/kohvisordid/{{ coffee.id }}/delete" data-confirm="Kustutada kohvisort „{{ coffee.nimi }}“?">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
+                  <button class="btn btn--outline btn--sm" type="submit">Kustuta</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ---- Sündmused ---- #}
+    <div class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Sündmused <span class="admin-count">({{ events | length }})</span></h2>
+        <a class="btn btn--primary btn--sm" href="/admin/sundmused/new">Lisa sündmus</a>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Kuupäev</th><th>Pealkiri</th><th>Asukoht</th><th>Vabu / kokku</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for event in events %}
+            <tr>
+              <td>{{ event.date_label }}</td>
+              <td>{{ event.title }}</td>
+              <td>{{ event.location }}</td>
+              <td class="num">{{ event.spots_free }} / {{ event.spots_total }}</td>
+              <td class="admin-table__actions">
+                <a class="btn btn--outline btn--sm" href="/admin/sundmused/{{ event.id }}/edit">Muuda</a>
+                <form method="post" action="/admin/sundmused/{{ event.id }}/delete" data-confirm="Kustutada sündmus „{{ event.title }}“?">
+                  <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
+                  <button class="btn btn--outline btn--sm" type="submit">Kustuta</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ---- Tellimused (read-only) ---- #}
+    <div class="admin-section">
+      <div class="admin-section__head">
+        <h2 class="admin-section__title">Tellimused <span class="admin-count">({{ orders | length }})</span></h2>
+      </div>
+      {% if orders | length %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>#</th><th>Klient</th><th>E-post</th><th>Kohv</th><th>Kogus</th><th>Summa</th><th>Aeg</th></tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td class="num">{{ order.id }}</td>
+              <td>{{ order.customer_name }}</td>
+              <td>{{ order.email }}</td>
+              <td>{{ order.coffee_nimi or "—" }}</td>
+              <td class="num">{{ order.quantity }}</td>
+              <td class="num">{{ (order.total_cents / 100) | round(2) }} €</td>
+              <td>{{ order.created_at | truncate(16, true, "") }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="admin-empty">Tellimusi pole veel. Esita üks <a href="/tellimus">tellimuste lehel</a>.</p>
+      {% endif %}
     </div>
   </div>
 </section>
+
+<script type="module" src="/assets/admin.js"></script>
 {% endblock %}
