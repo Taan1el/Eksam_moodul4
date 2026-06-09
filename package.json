@@ -8,6 +8,7 @@
     "dev": "npm run build && nodemon app.js",
     "build": "vite build",
     "migrate": "node src/db/migrate.js",
+    "add-admin": "node scripts/add-admin.mjs",
     "test": "npm run test:integration",
     "test:integration": "node --test --test-concurrency=1 tests/integration/app.test.js",
     "test:browser": "playwright test",
